@@ -14,6 +14,6 @@ module.exports = mongoose => {
     return object;
   });
 
-  const Tutorial = mongoose.model("issuedetails", schema);
-  return Tutorial;
+  const Incident = mongoose.model("issuedetails", schema);
+  return Incident;
 };
