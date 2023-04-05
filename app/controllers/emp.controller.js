@@ -1,7 +1,7 @@
 const db = require("../models");
 const Empl = db.empl;
 
-// Create and Save a new Tutorial
+// Create and Save a new Incident
 exports.create = (req, res) => {
   // Validate request
   if (!req.body.title) {
@@ -9,14 +9,14 @@ exports.create = (req, res) => {
     return;
   }
 
-  // Create a Tutorial
+  // Create a Incident
   const empl = new Empl({
     title: req.body.title,
     description: req.body.description,
     published: req.body.published ? req.body.published : false
   });
 
-  // Save Tutorial in the database
+  // Save Incident in the database
   empl
     .save(empl)
     .then(data => {
@@ -25,12 +25,12 @@ exports.create = (req, res) => {
     .catch(err => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while creating the Tutorial."
+          err.message || "Some error occurred while creating the Incident."
       });
     });
 };
 
-// Retrieve all Tutorials from the database.
+// Retrieve all Incidents from the database.
 exports.findAll = (req, res) => {
   const title = req.query.title;
   var condition = title ? { title: { $regex: new RegExp(title), $options: "i" } } : {};
@@ -42,12 +42,12 @@ exports.findAll = (req, res) => {
     .catch(err => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while retrieving tutorials."
+          err.message || "Some error occurred while retrieving Incidents."
       });
     });
 };
 
-// Find a single Tutorial with an id
+// Find a single Incident with an id
 exports.findOne = (req, res) => {
   const id = req.params.id;
   Empl.findById(id)
@@ -63,7 +63,7 @@ exports.findOne = (req, res) => {
     });
 };
 
-// Update a Tutorial by the id in the request
+// Update a Incident by the id in the request
 exports.update = (req, res) => {
   if (!req.body) {
     return res.status(400).send({
@@ -77,18 +77,18 @@ exports.update = (req, res) => {
     .then(data => {
       if (!data) {
         res.status(404).send({
-          message: `Cannot update Tutorial with id=${id}. Maybe Tutorial was not found!`
+          message: `Cannot update Incident with id=${id}. Maybe Incident was not found!`
         });
-      } else res.send({ message: "Tutorial was updated successfully." });
+      } else res.send({ message: "Incident was updated successfully." });
     })
     .catch(err => {
       res.status(500).send({
-        message: "Error updating Tutorial with id=" + id
+        message: "Error updating Incident with id=" + id
       });
     });
 };
 
-// Delete a Tutorial with the specified id in the request
+// Delete a Incident with the specified id in the request
 exports.delete = (req, res) => {
   const id = req.params.id;
 
@@ -96,38 +96,38 @@ exports.delete = (req, res) => {
     .then(data => {
       if (!data) {
         res.status(404).send({
-          message: `Cannot delete Tutorial with id=${id}. Maybe Tutorial was not found!`
+          message: `Cannot delete Incident with id=${id}. Maybe Incident was not found!`
         });
       } else {
         res.send({
-          message: "Tutorial was deleted successfully!"
+          message: "Incident was deleted successfully!"
         });
       }
     })
     .catch(err => {
       res.status(500).send({
-        message: "Could not delete Tutorial with id=" + id
+        message: "Could not delete Incident with id=" + id
       });
     });
 };
 
-// Delete all Tutorials from the database.
+// Delete all Incidents from the database.
 exports.deleteAll = (req, res) => {
   Empl.deleteMany({})
     .then(data => {
       res.send({
-        message: `${data.deletedCount} Tutorials were deleted successfully!`
+        message: `${data.deletedCount} Incidents were deleted successfully!`
       });
     })
     .catch(err => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while removing all tutorials."
+          err.message || "Some error occurred while removing all Incidents."
       });
     });
 };
 
-// Find all published Tutorials
+// Find all published Incidents
 exports.findAllPublished = (req, res) => {
   Empl.find({ published: true })
     .then(data => {
@@ -136,7 +136,7 @@ exports.findAllPublished = (req, res) => {
     .catch(err => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while retrieving tutorials."
+          err.message || "Some error occurred while retrieving Incidents."
       });
     });
 };
