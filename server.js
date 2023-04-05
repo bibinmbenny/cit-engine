@@ -1,7 +1,10 @@
 const express = require("express");
 const cors = require("cors");
+//const path = require("path");
 
 const app = express();
+//const static_path = path.join(__dirname, "./public" );
+//app.use(express.static(static_path));
 
 var corsOptions = {
   origin: "http://localhost:8081"
@@ -30,14 +33,18 @@ db.mongoose
   });
 
 // simple route
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to CIT application." });
-});
+//app.get("/", (req, res) => {
+//  res.json({ message: "Welcome to CIT application." });
+//});
 
-require("./app/routes/turorial.routes")(app);
+require("./app/routes/incident.routes")(app);
+require("./app/routes/emp.routes")(app);
+
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8085;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
+
+
