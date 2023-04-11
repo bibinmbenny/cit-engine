@@ -1,13 +1,13 @@
-const express = require('express');
-const cors = require('cors');
-//const path = require('path');
+const express = require("express");
+const cors = require("cors");
+//const path = require("path");
 const prometheus = require('prom-client');
+const { httpRequestCounter } = require('./metrics');
 const client = require('prom-client');
 const promBundle = require('express-prom-bundle');
-const { httpRequestCounter } = require('./metrics');
-const app = express();
-//const static_path = path.join(__dirname, './public');
 
+const app = express();
+//const static_path = path.join(__dirname, "./public" );
 
 const metricsMiddleware = promBundle({
   includeMethod: true,
@@ -20,30 +20,39 @@ const metricsMiddleware = promBundle({
 
 
 //app.use(express.static(static_path));
+
 var corsOptions = {
-  origin: 'https://citengin.azurewebsites.net',
+  origin: "https://citengin.azurewebsites.net"
 };
+
 app.use(cors(corsOptions));
+
 // parse requests of content-type - application/json
 app.use(express.json());
+
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
 app.use(metricsMiddleware);
 
-
-const db = require('./app/models');
+const db = require("./app/models");
 db.mongoose
   .connect(db.url, {
     useNewUrlParser: true,
-    useUnifiedTopology: true,
+    useUnifiedTopology: true
   })
   .then(() => {
-    console.log('Connected to the database!');
+    console.log("Connected to the database!");
   })
-  .catch((err) => {
-    console.log('Cannot connect to the database!', err);
+  .catch(err => {
+    console.log("Cannot connect to the database!", err);
     process.exit();
   });
+
+// simple route
+//app.get("/", (req, res) => {
+//  res.json({ message: "Welcome to CIT application." });
+//});
+
 
 // Create counters for total and failed API calls
 const totalApiCallsCounter = new prometheus.Counter({
@@ -68,33 +77,24 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/', (req, res) => {
-  // Increment the HTTP request counter
-  httpRequestCounter.labels(req.method, req.url).inc();
-
-  // Send a response to the client
-  res.send('Hello, world!');
-});
-
 // Expose metrics
 app.get('/metrics', (req, res) => {
   res.set('Content-Type', prometheus.register.contentType);
-  prometheus.register
-    .metrics()
-    .then((metrics) => {
-      res.end(metrics.toString()); // <-- convert to string
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).end();
-    });
+  prometheus.register.metrics().then(metrics => {
+    res.end(metrics.toString()); // <-- convert to string
+  }).catch(err => {
+    console.error(err);
+    res.status(500).end();
+  });
 });
 
-require('./app/routes/incident.routes')(app);
-require('./app/routes/emp.routes')(app);
+require("./app/routes/incident.routes")(app);
+require("./app/routes/emp.routes")(app);
+
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8085;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
+
