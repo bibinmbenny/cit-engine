@@ -3,6 +3,7 @@ const cors = require("cors");
 //const path = require("path");
 const prometheus = require("prom-client");
 const client = require("prom-client");
+//import { register } from "prom-client";
 const promBundle = require("express-prom-bundle");
 
 const app = express();
