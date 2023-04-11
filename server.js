@@ -1,12 +1,12 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
+//const path = require('path');
 const prometheus = require('prom-client');
 const client = require('prom-client');
 const promBundle = require('express-prom-bundle');
 const { httpRequestCounter } = require('./metrics');
 const app = express();
-const static_path = path.join(__dirname, './public');
+//const static_path = path.join(__dirname, './public');
 
 
 const metricsMiddleware = promBundle({
@@ -19,7 +19,7 @@ const metricsMiddleware = promBundle({
 });
 
 
-app.use(express.static(static_path));
+//app.use(express.static(static_path));
 var corsOptions = {
   origin: 'https://citengin.azurewebsites.net',
 };
