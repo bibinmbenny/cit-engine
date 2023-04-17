@@ -1,13 +1,12 @@
 const express = require("express");
 const cors = require("cors");
-//const path = require("path");
 const prometheus = require("prom-client");
 const client = require("prom-client");
 //import { register } from "prom-client";
 const promBundle = require("express-prom-bundle");
 const axios = require('axios');
 const prometheusUrl = 'http://54.169.96.169:9090';
-const query = 'up';
+const query = 'ALERTS';
 const { MongoClient } = require('mongodb');
 const mongoUrl = 'mongodb://citpoc-db:cL37gGRUYp2Ixqosg95mITf5UF104lYaBv4yk6eX5kkuWYq6zZAn6lTAsJ1SuEgUij6YlbC6Rk8xACDb2uvXUA==@citpoc-db.mongo.cosmos.azure.com:10255/?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@citpoc-db@/test';
 const mongoClient = new MongoClient(mongoUrl, { useUnifiedTopology: true });
@@ -15,8 +14,7 @@ const mongoClient = new MongoClient(mongoUrl, { useUnifiedTopology: true });
 
 
 const app = express();
-//const static_path = path.join(__dirname, "./public" );
-//app.use(express.static(static_path));
+
 
 var corsOptions = {
   origin: "https://citengin.azurewebsites.net"
@@ -107,23 +105,62 @@ async function main() {
     const response = await axios.get(`${prometheusUrl}/api/v1/query`, {
       params: { query },
     });
-    
+
     const data = response.data;
+    await alertsCollection.createIndex({ ID: 1 });
 
     // Only save data with a timestamp greater than the last retrieved time
     const newAlerts = data.data.result.filter(alert => alert.value[0] > lastRetrievedTime);
-    await alertsCollection.insertMany(newAlerts);
-    console.log(`Saved ${newAlerts.length} new alerts to MongoDB`);
+    const lastAlert = await alertsCollection.findOne({}, { sort: { ID: -1 } });
+    let index = lastAlert ? lastAlert.ID + 1 : 1;
 
-    // Update the last retrieved time
-    lastRetrievedTime = Date.now();
-  
+    const existingAlerts = await alertsCollection.find({ ID: { $exists: true } }).toArray();
+    if (existingAlerts.length > 0 && !existingAlerts.every(alert => alert.hasOwnProperty('ID'))) {
+    console.error('Some existing documents in the collection do not have the ID field');
+    process.exit(1);
+    }
+    //const newAlerts = data.data.result.filter(alert => alert.value[0] > lastRetrievedTime);
+    if (newAlerts.length > 0) {
+      //let index = 51;
+      // Map newAlerts array to match the schema of the issuedetails collection
+      const alertsToInsert = newAlerts.map(alert => ({
+        ID: index++,
+        Incident_Name: alert.metric.alertname,
+        Description: alert.metric.description,
+        Created_Date: new Date(alert.value[0] * 1000),
+        Priority: alert.metric.severity,
+        reason: alert.metric.summary,
+        Assigned_to: "Unassigned"	
+        // add more fields as needed
+      }));
+
+      const newAlertIds = alertsToInsert.map(alert => alert.ID);
+      if (existingAlerts.some(alert => newAlertIds.includes(alert.ID))) {
+      console.error('Some new alerts have the same ID as existing documents in the collection');
+      process.exit(1);
+      }
+
+      // Insert new documents into the issuedetails collection
+      await alertsCollection.insertMany(alertsToInsert);
+      console.log(`Saved ${newAlerts.length} new alerts to MongoDB`);
+      
+      // Create a unique index on the _id field to auto-increment the ID
+      await alertsCollection.createIndex({ ID: 1 }, { name: "ID_index" });
+
+      // Update the last retrieved time
+      lastRetrievedTime = Date.now();
+    } else {
+      console.log('No new alerts to save to MongoDB');
+    }
+
     // Disconnect from MongoDB
     await mongoClient.close();
   } catch (err) {
     console.error(err);
   }
 }
+
+
 
 main();
 
@@ -136,5 +173,3 @@ const PORT = process.env.PORT || 8085;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
-
-
