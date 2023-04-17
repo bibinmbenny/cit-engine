@@ -5,6 +5,14 @@ const prometheus = require("prom-client");
 const client = require("prom-client");
 //import { register } from "prom-client";
 const promBundle = require("express-prom-bundle");
+const axios = require('axios');
+const prometheusUrl = 'http://54.169.96.169:9090';
+const query = 'up';
+const { MongoClient } = require('mongodb');
+const mongoUrl = 'mongodb://citpoc-db:cL37gGRUYp2Ixqosg95mITf5UF104lYaBv4yk6eX5kkuWYq6zZAn6lTAsJ1SuEgUij6YlbC6Rk8xACDb2uvXUA==@citpoc-db.mongo.cosmos.azure.com:10255/?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@citpoc-db@/test';
+const mongoClient = new MongoClient(mongoUrl, { useUnifiedTopology: true });
+
+
 
 const app = express();
 //const static_path = path.join(__dirname, "./public" );
@@ -85,6 +93,39 @@ app.get('/metrics', (req, res) => {
     res.status(500).end();
   });
 });
+
+let lastRetrievedTime = null;
+
+async function main() {
+  try {
+    // Connect to MongoDB
+    await mongoClient.connect();
+    const db = mongoClient.db();
+    const alertsCollection = db.collection('issuedetails');
+
+    // Retrieve data from Prometheus
+    const response = await axios.get(`${prometheusUrl}/api/v1/query`, {
+      params: { query },
+    });
+    
+    const data = response.data;
+
+    // Only save data with a timestamp greater than the last retrieved time
+    const newAlerts = data.data.result.filter(alert => alert.value[0] > lastRetrievedTime);
+    await alertsCollection.insertMany(newAlerts);
+    console.log(`Saved ${newAlerts.length} new alerts to MongoDB`);
+
+    // Update the last retrieved time
+    lastRetrievedTime = Date.now();
+  
+    // Disconnect from MongoDB
+    await mongoClient.close();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+main();
 
 require("./app/routes/incident.routes")(app);
 require("./app/routes/emp.routes")(app);
