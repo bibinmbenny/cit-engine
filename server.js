@@ -120,7 +120,7 @@ async function main() {
         ID: index++,
         Incident_Name: alert.metric.alertname,
         Description: alert.metric.description,
-        Created_Date: new Date(alert.value[0] * 1000).toLocaleDateString('en-GB'),
+        Created_Date: new Date(alert.value[0] * 1000).toLocaleDateString('en-GB').split('/').join('-'),
         Priority: alert.metric.severity === "critical" ? "P1" : alert.metric.severity === "warning" ? "P2" : "P3",
         reason: alert.metric.summary,
         Assigned_to: "Unassigned",
