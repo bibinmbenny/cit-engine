@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const prometheus = require("prom-client");
 const client = require("prom-client");
-//import { register } from "prom-client";
 const promBundle = require("express-prom-bundle");
 const axios = require('axios');
 const prometheusUrl = 'http://54.169.96.169:9090';
@@ -14,7 +13,6 @@ const mongoClient = new MongoClient(mongoUrl, { useUnifiedTopology: true });
 
 
 const app = express();
-
 
 var corsOptions = {
   origin: "https://citengin.azurewebsites.net"
@@ -53,10 +51,6 @@ db.mongoose
     process.exit();
   });
 
-// simple route
-//app.get("/", (req, res) => {
-//  res.json({ message: "Welcome to CIT application." });
-//});
 
 // Create counters for total and failed API calls
 const totalApiCallsCounter = new prometheus.Counter({
@@ -121,16 +115,16 @@ async function main() {
     }
     //const newAlerts = data.data.result.filter(alert => alert.value[0] > lastRetrievedTime);
     if (newAlerts.length > 0) {
-      //let index = 51;
       // Map newAlerts array to match the schema of the issuedetails collection
       const alertsToInsert = newAlerts.map(alert => ({
         ID: index++,
         Incident_Name: alert.metric.alertname,
         Description: alert.metric.description,
         Created_Date: new Date(alert.value[0] * 1000),
-        Priority: alert.metric.severity,
+        Priority: alert.metric.severity === "critical" ? "P1" : alert.metric.severity === "warning" ? "P2" : "P3",
         reason: alert.metric.summary,
-        Assigned_to: "Unassigned"	
+        Assigned_to: "Unassigned",
+        Status : "Open"
         // add more fields as needed
       }));
 
